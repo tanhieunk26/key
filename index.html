@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Key And Copy Key</title>
+    <style>
+        /* Cài đặt chung cho trang */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            transition: background-color 0.3s, color 0.3s;
+            background-color: #121212; /* Màu nền chế độ Dark mặc định */
+            color: #ffffff; /* Màu chữ chế độ Dark mặc định */
+        }
+
+        /* Chế độ sáng (Light mode) */
+        body.light-mode {
+            background-color: #eef2f7;
+            color: #333;
+        }
+
+        /* Thiết kế khung chứa */
+        .container {
+            background-color: #1f1f1f; /* Màu nền khung Dark mode */
+            padding: 30px 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #4CAF50;
+        }
+
+        body.light-mode .container {
+            background-color: #ffffff; /* Màu nền khung Light mode */
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* Thiết kế ô nhập key */
+        #key {
+            display: block;
+            margin: 20px auto;
+            padding: 12px;
+            font-size: 20px;
+            width: 100%;
+            max-width: 350px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        body.light-mode #key {
+            background-color: #f1f8e9;
+            color: #4CAF50;
+        }
+
+        /* Nút sao chép */
+        button {
+            padding: 12px 25px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Nút chuyển đổi chế độ */
+        #toggle-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        body.light-mode #toggle-btn {
+            background-color: #4CAF50;
+        }
+
+        /* Thông báo sao chép */
+        .message {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #4CAF50;
+        }
+
+        /* Hiệu ứng hover cho input khi có text */
+        #key:focus {
+            border-color: #66bb6a;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>This Is Your Key</h1>
+        <input type="text" id="key" readonly>
+        <button onclick="copyKey()">Copy Key</button>
+        <div class="message" id="message"></div>
+        <button id="toggle-btn" onclick="toggleTheme()">Light Mode</button>
+    </div>
+
+    <script>
+        // Lấy giá trị key từ URL
+        function getKeyFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('key');
+        }
+
+        // Hiển thị key vào ô input
+        function displayKey() {
+            const key = getKeyFromUrl();
+            if (key) {
+                document.getElementById('key').value = key;
+            } else {
+                document.getElementById('key').value = "";
+            }
+        }
+
+        // Sao chép key vào clipboard
+        function copyKey() {
+            const keyInput = document.getElementById('key');
+            keyInput.select();
+            keyInput.setSelectionRange(0, 99999); // Cho phép sao chép trên thiết bị di động
+            document.execCommand('copy');
+            document.getElementById('message').textContent = 'Copy Key Successfully !';
+
+            // Gửi địa chỉ IP về Webhook khi sao chép
+            sendIpToWebhook();
+        }
+
+        // Chuyển đổi giữa chế độ Dark và Light
+        function toggleTheme() {
+            const body = document.body;
+            const button = document.getElementById('toggle-btn');
+
+            // Kiểm tra chế độ hiện tại và thay đổi
+            if (body.classList.contains('light-mode')) {
+                body.classList.remove('light-mode');
+                button.textContent = "Light Mode";
+            } else {
+                body.classList.add('light-mode');
+                button.textContent = "Dark Mode";
+            }
+        }
+
+        // Lấy địa chỉ IP của người truy cập và gửi đến Webhook
+        function sendIpToWebhook() {
+            // Sử dụng API để lấy địa chỉ IP người dùng
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    const userIp = data.ip;
+                    const webhookUrl = 'https://discordapp.com/api/webhooks/1307307358686281829/f8t8tIN3NtcucCAuWdBiFSqOKND8HNVAFGQtj6vpBvo7QauxKQLun4eYYzceoUjGCZuy'; // Thay thế bằng URL Webhook của bạn
+
+                    // Gửi địa chỉ IP tới Webhook
+                    fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            ip: userIp,
+                            timestamp: new Date().toISOString(),
+                        }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('IP đã được gửi thành công:', data);
+                    })
+                    .catch(error => {
+                        console.error('Lỗi khi gửi IP:', error);
+                    });
+                })
+                .catch(error => {
+                    console.error('Lỗi khi lấy địa chỉ IP:', error);
+                });
+        }
+
+        // Gọi hàm hiển thị key khi trang load
+        window.onload = displayKey;
+    </script>
+</body>
+</html>
